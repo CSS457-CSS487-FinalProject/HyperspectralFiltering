@@ -2,6 +2,9 @@
 #include <opencv2/imgproc/imgproc.hpp>
 #include <opencv2/highgui/highgui.hpp>
 #include <iostream>
+
+#include "SpecImage.h"
+
 using namespace cv;
 using namespace std;
 
@@ -35,6 +38,15 @@ string type2str(int type)
 
 int main(int argc, char* argv[])
 {	
+	SpecImage newImg("EO1H0420342016268110PF_1T");
+
+	Mat blue = newImg.getImage(532);
+	imshow("Blue", blue);
+	waitKey(0);
+
+	/* OLD CODE */
+	return 0; // REM out to run the following code
+
 	// Load three (fairly arbitrary) images 
 	cv::Mat R = cv::imread("EO1H0420342016268110PF_B035_L1T.TIF", -1); // 035 = 701 nm
 	cv::Mat G = cv::imread("EO1H0420342016268110PF_B018_L1T.TIF", -1); // 018 = 528 nm 
@@ -89,7 +101,7 @@ int main(int argc, char* argv[])
 	// Show this image (no write)
 	imshow("Modified Merged", new_Color);
 
-	/* CLAHE modification*/
+	/* CLAHE modification */
 	// Try out CLAHE image resolution: 
 	//  A method to make an image brighter by (I think:) converting it to a 
 	//  different color space and normalizing the "lightness" in that entire
@@ -120,6 +132,5 @@ int main(int argc, char* argv[])
 	cv::imshow("CLAHE Merged", image_clahe);
 	cv::waitKey();
 	imwrite("CLAHE.png", image_clahe);
-	
 	return 0;
 }
