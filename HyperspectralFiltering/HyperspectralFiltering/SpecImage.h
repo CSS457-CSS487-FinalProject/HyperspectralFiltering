@@ -26,8 +26,10 @@ class SpecImage
 		// Return the image of a given wavelength
 		Mat getImage(int wavelength) const;
 
-		// Return the RGB estimation of this image
+		// Return the RGB estimation of this image (using 380nm through 730nm)
 		Mat getRGB();
+
+		Mat getComposite(int redWavelength, int blueWavelength, int greenWavelength);
 	private:
 		struct imgData
 		{

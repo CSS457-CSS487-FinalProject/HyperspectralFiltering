@@ -1,3 +1,9 @@
 ﻿  main.cpp
+  SpecImage.cpp
+c:\media\school\vision-signals project\hyperspectralfiltering\hyperspectralfiltering\hyperspectralfiltering\specimage.cpp(197): warning C4838: conversion from 'double' to 'const float' requires a narrowing conversion
+c:\media\school\vision-signals project\hyperspectralfiltering\hyperspectralfiltering\hyperspectralfiltering\specimage.cpp(197): warning C4305: 'initializing': truncation from 'double' to 'const float'
+c:\media\school\vision-signals project\hyperspectralfiltering\hyperspectralfiltering\hyperspectralfiltering\specimage.cpp(203): warning C4838: conversion from 'double' to 'float' requires a narrowing conversion
+c:\media\school\vision-signals project\hyperspectralfiltering\hyperspectralfiltering\hyperspectralfiltering\specimage.cpp(203): warning C4305: 'initializing': truncation from 'double' to 'float'
+  Generating Code...
   HyperspectralFiltering.vcxproj -> C:\Media\School\Vision-Signals Project\HyperspectralFiltering\HyperspectralFiltering\x64\Debug\HyperspectralFiltering.exe
   HyperspectralFiltering.vcxproj -> C:\Media\School\Vision-Signals Project\HyperspectralFiltering\HyperspectralFiltering\x64\Debug\HyperspectralFiltering.pdb (Partial PDB)
