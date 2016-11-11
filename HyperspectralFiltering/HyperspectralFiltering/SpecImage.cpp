@@ -273,6 +273,34 @@ Mat SpecImage::getComposite(int redWavelength, int blueWavelength, int greenWave
 	return composite;
 }
 
+// STATIC method to make a composite given three grayscale images
+Mat SpecImage::makeComposite(Mat redImage, Mat blueImage, Mat greenImage)
+{
+	Mat redVal;
+	Mat greenVal;
+	Mat blueVal;
+
+	vector<Mat> mergeArray;
+
+	int Max = 256 * 16;
+	int Min = 0;
+
+	redImage.convertTo(redVal, CV_8U, 255.0 / (Max - Min), -255.0*Min / (Max - Min));
+	blueImage.convertTo(greenVal, CV_8U, 255.0 / (Max - Min), -255.0*Min / (Max - Min));
+	greenImage.convertTo(blueVal, CV_8U, 255.0 / (Max - Min), -255.0*Min / (Max - Min));
+
+	mergeArray.push_back(blueVal);
+	mergeArray.push_back(greenVal);
+	mergeArray.push_back(redVal);
+
+	Mat_<Vec3b> composite;
+
+	//merge(mergeArray, composite); // This will not work in Release mode
+	merge(&mergeArray[0], mergeArray.size(), composite);
+
+	return composite;
+}
+
 // Load the Hyperion Wavelength table
 // Hyperion has an odd part of it's wavelength table where
 //  bands 71 through 91 overlap with 50 through 70. This is

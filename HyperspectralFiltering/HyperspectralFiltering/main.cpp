@@ -46,7 +46,26 @@ int main(int argc, char* argv[])
 	//waitKey(0);
 
 	Mat colorComposite = newImg.getComposite(641, 580, 509); // Hyperion reccomended color composite
-	Mat redVegetation = newImg.getComposite(855, 580, 509); // Highlight vegetation in RED
+
+	Mat redVeg = newImg.getImage(855);
+	Mat blue = newImg.getImage(580);
+	Mat green = newImg.getImage(509);
+
+	short arbitraryThreshold = 32768 / 18;
+
+	for (int r = 0; r < redVeg.rows; r++)
+	{
+		for (int c = 0; c < redVeg.cols; c++)
+		{
+			short intensity = redVeg.at<ushort>(r, c);
+			if (intensity > arbitraryThreshold)
+			{
+				redVeg.at<ushort>(r, c) = saturate_cast<ushort>(intensity + arbitraryThreshold);
+			}
+		}
+	}
+
+	Mat redVegetation = SpecImage::makeComposite(redVeg, blue, green); // Highlight vegetation in RED
 	
 	imshow("Color Composite", colorComposite);
 	imshow("Red Veggies", redVegetation);

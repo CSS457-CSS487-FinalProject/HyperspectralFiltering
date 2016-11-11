@@ -29,7 +29,12 @@ class SpecImage
 		// Return the RGB estimation of this image (using 380nm through 730nm)
 		Mat getRGB();
 
+		// Return a composite image given three wavelengths
 		Mat getComposite(int redWavelength, int blueWavelength, int greenWavelength);
+
+		// Return a composite image given three grayscale images (such as those given via
+		//  getImage()) Expects the same dimensions, and converts them to CV_8U
+		static Mat makeComposite(Mat redImage, Mat blueImage, Mat greenImage);
 	private:
 		struct imgData
 		{
