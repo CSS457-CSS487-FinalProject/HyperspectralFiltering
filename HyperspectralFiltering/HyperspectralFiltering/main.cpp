@@ -46,31 +46,33 @@ int main(int argc, char* argv[])
 	//waitKey(0);
 
 	Mat colorComposite = newImg.getComposite(641, 580, 509); // Hyperion reccomended color composite
+	Mat swir = newImg.getComposite(1954, 1629, 1074); // Short Wavelength InfraRed (SWIR)
 
-	Mat redVeg = newImg.getImage(855);
-	Mat blue = newImg.getImage(580);
-	Mat green = newImg.getImage(509);
+	Mat grayscale;
+	Mat veg = newImg.getImage(855); // 16US1
 
-	short arbitraryThreshold = 32768 / 18;
+	short arbitraryThreshold = 32768 / 12;
+	veg.convertTo(veg, CV_8UC1, 255.0 / arbitraryThreshold);
 
-	for (int r = 0; r < redVeg.rows; r++)
+	cvtColor(colorComposite, grayscale, CV_RGB2GRAY); // Convert to gray
+
+	Mat redVegetation = grayscale.clone();
+	cvtColor(redVegetation, redVegetation, CV_GRAY2BGR); // Return to 3 channels
+	
+	for (int r = 0; r < redVegetation.rows; r++)
 	{
-		for (int c = 0; c < redVeg.cols; c++)
+		for (int c = 0; c < redVegetation.cols; c++)
 		{
-			short intensity = redVeg.at<ushort>(r, c);
-			if (intensity > arbitraryThreshold)
-			{
-				redVeg.at<ushort>(r, c) = saturate_cast<ushort>(intensity + arbitraryThreshold);
-			}
+			redVegetation.at<Vec3b>(r, c)[2] = max(veg.at<uchar>(r, c), grayscale.at<uchar>(r, c));
 		}
 	}
 
-	Mat redVegetation = SpecImage::makeComposite(redVeg, blue, green); // Highlight vegetation in RED
-	
 	imshow("Color Composite", colorComposite);
 	imshow("Red Veggies", redVegetation);
+	imshow("SWIR", swir);
 	imwrite("ColorComposite.png", colorComposite);
 	imwrite("RedVeg.png", redVegetation);
+	imwrite("SWIR.png", swir);
 	waitKey(0);
 	
 	return 0;
