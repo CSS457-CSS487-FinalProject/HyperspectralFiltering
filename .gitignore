@@ -276,6 +276,6 @@ __pycache__/
 
 
 # Image files and folders
-E01H*/
+**_1T/
 *.TIF
 *.png
