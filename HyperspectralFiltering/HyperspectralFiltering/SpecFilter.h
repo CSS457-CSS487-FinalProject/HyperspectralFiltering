@@ -1,3 +1,8 @@
+/*
+SpecFilter represents a resonance pattern that spectral images
+can be filtered against to determine where the target objects
+are in a hyperspectral image.
+*/
 #pragma once
 #include <string>
 #include <vector>
@@ -7,8 +12,7 @@ using namespace std;
 class SpecFilter
 {
 	public:
-		SpecFilter(); 
-		~SpecFilter(); // Will we need one?
+		SpecFilter();
 
 		void LoadFromFile(string fileName);
 		int GetIntensity(int wavelength) const; 
