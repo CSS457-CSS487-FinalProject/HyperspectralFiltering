@@ -1,10 +1,20 @@
+/*
+Defines a Spectral Image, which contains hundreds of separate images
+take of the same location at very different wavelengths.
+*/
 #include "SpecImage.h"
 
-// TEMPORARY
+// Debuging
 #include <iostream>
 
 vector<int> SpecImage::hyperionWavelengthTable;
 
+/*
+Creates a new Spectral Image based on the image's root file name.
+Initializes the static table of hyperion satellite wavelengths, if
+it has not been initialized yet.
+See LoadFromFile
+*/
 SpecImage::SpecImage(string fileName)
 {
 	if (hyperionWavelengthTable.capacity() != 242)
@@ -18,20 +28,28 @@ SpecImage::SpecImage(string fileName)
 	cout << "Image data loaded" << endl;
 }
 
+/*
+Creates a new Spectral Image based on the image's root file name.
+This is done by dynamically generating file names since Hyperion's
+list of spectral images follow a set pattern.
+*/
 void SpecImage::LoadFromFile(string fileName)
 {
-	bool L1T = false; // False: L1GST filetype
+	// Determine if the file types are Hyperion's L1T file type or not.
+	bool L1T = false;
 	if (fileName.length() > 3 && fileName.substr(fileName.length() - 3, fileName.length()) == "_1T")
 	{
 		L1T = true;
 		fileName += "/" + fileName.substr(0, fileName.length() - 3);
-		//cout << "FileName: " << fileName << endl;
 	}
 	else
 	{
 		fileName += "/" + fileName;
 	}
 
+	// For each spectral band image in the hypersepectral image...
+	//     Generate the file name,
+	//     Read the file into memory and store it in the vector
 	for (int i = 1; i <= 242; i++)
 	{
 		Mat img;
@@ -48,7 +66,6 @@ void SpecImage::LoadFromFile(string fileName)
 			else
 			{
 				img = imread(fileName + "_B00" + to_string(i) + "_L1T.TIF", -1);
-				//cout << "ImgName: " << (fileName + "_B" + to_string(i) + "_L1T.TIF") << endl;
 			}
 		}
 		else
@@ -68,7 +85,7 @@ void SpecImage::LoadFromFile(string fileName)
 		}
 
 		specImg.push_back({hyperionWavelengthTable[i-1],img});
-	}
+	} // end for-loop of spectral images.
 }
 
 // Given a wavelength to get from the spectral image, return the nearest saved
