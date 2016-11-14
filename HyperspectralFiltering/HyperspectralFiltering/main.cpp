@@ -1,3 +1,15 @@
+/*
+Hyperspectral Filtering filters a hyperspectral image by a set
+series of filter parameters that makeup the spectral resonance pattern
+of objects of interest.
+
+Authors:
+Taran Christiansen - taranch@uw.edu
+Christian Gebhart  - christian.gebhart@gmail.com
+Anthony Pepe       - apepe@uw.edu
+
+Date: November 2016
+*/
 #include <opencv2/core/core.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 #include <opencv2/highgui/highgui.hpp>
@@ -40,11 +52,6 @@ int main(int argc, char* argv[])
 {	
 	SpecImage newImg("EO1H0420342016268110PF_1T");
 
-	//Mat newRGB = newImg.getRGB();
-	//imshow("RGB", newRGB);
-	//imwrite("RGB.png", newRGB);
-	//waitKey(0);
-
 	Mat colorComposite = newImg.getComposite(641, 580, 509); // Hyperion reccomended color composite
 	Mat swir = newImg.getComposite(1954, 1629, 1074); // Short Wavelength InfraRed (SWIR)
 
@@ -74,6 +81,6 @@ int main(int argc, char* argv[])
 	imwrite("RedVeg.png", redVegetation);
 	imwrite("SWIR.png", swir);
 	waitKey(0);
-	
+
 	return 0;
 }

@@ -1,10 +1,20 @@
+/*
+Defines a Spectral Image, which contains hundreds of separate images
+take of the same location at very different wavelengths.
+*/
 #include "SpecImage.h"
 
-// TEMPORARY
+// Debuging
 #include <iostream>
 
 vector<int> SpecImage::hyperionWavelengthTable;
 
+/*
+Creates a new Spectral Image based on the image's root file name.
+Initializes the static table of hyperion satellite wavelengths, if
+it has not been initialized yet.
+See LoadFromFile
+*/
 SpecImage::SpecImage(string fileName)
 {
 	if (hyperionWavelengthTable.capacity() != 242)
@@ -18,20 +28,28 @@ SpecImage::SpecImage(string fileName)
 	cout << "Image data loaded" << endl;
 }
 
+/*
+Creates a new Spectral Image based on the image's root file name.
+This is done by dynamically generating file names since Hyperion's
+list of spectral images follow a set pattern.
+*/
 void SpecImage::LoadFromFile(string fileName)
 {
-	bool L1T = false; // False: L1GST filetype
+	// Determine if the file types are Hyperion's L1T file type or not.
+	bool L1T = false;
 	if (fileName.length() > 3 && fileName.substr(fileName.length() - 3, fileName.length()) == "_1T")
 	{
 		L1T = true;
 		fileName += "/" + fileName.substr(0, fileName.length() - 3);
-		//cout << "FileName: " << fileName << endl;
 	}
 	else
 	{
 		fileName += "/" + fileName;
 	}
 
+	// For each spectral band image in the hypersepectral image...
+	//     Generate the file name,
+	//     Read the file into memory and store it in the vector
 	for (int i = 1; i <= 242; i++)
 	{
 		Mat img;
@@ -48,7 +66,6 @@ void SpecImage::LoadFromFile(string fileName)
 			else
 			{
 				img = imread(fileName + "_B00" + to_string(i) + "_L1T.TIF", -1);
-				//cout << "ImgName: " << (fileName + "_B" + to_string(i) + "_L1T.TIF") << endl;
 			}
 		}
 		else
@@ -68,16 +85,23 @@ void SpecImage::LoadFromFile(string fileName)
 		}
 
 		specImg.push_back({hyperionWavelengthTable[i-1],img});
-	}
+	} // end for-loop of spectral images.
 }
 
-// Given a wavelength to get from the spectral image, return the nearest saved
-//  wavelength matrix 
+/*
+Fetches a single spectral image, which is specified by its wavelength.
+Since the images are specified by a bounding set of wavelengths, the nearest
+wavelength is returned since an image for that exact wavelength may not exist.
+Returns the nearest wavelength image (OpenCV Mat).
+*/
 Mat SpecImage::getImage(int wavelength) const
 {
-	// Return something here on invalid params (-1, less than 355ish, etc)
+	if (wavelength < 350 || wavelength > 2600)
+	{
+		//return NULL;
+	}
 
-	// Estimate the closest wavelength image..
+	// Estimate the closest wavelength image
 	int index;
 	if (wavelength <= 844)
 	{
@@ -104,16 +128,15 @@ Mat SpecImage::getImage(int wavelength) const
 		}
 	}
 
-	//cout << "Wavelength requested:\t" << wavelength << "\t Wavelength served:\t" << specImg[index].wavelength << endl;
-
 	return specImg[index].img;
 }
 
 
-// Return the RGB estimation of this hyperspectral image
+/*
+Returns an RGB image estimation of this hyperspectral image.
+*/
 Mat SpecImage::getRGB()
 {
-	cout << "Creating RGB Image.." << endl;
 	Mat_<Vec3b> rgb(specImg[0].img.rows, specImg[0].img.cols);
 
 	// End-Image Gamma 
@@ -198,18 +221,18 @@ Mat SpecImage::getRGB()
 
 	// CIE RGB Conversion matrix
 	float XYZ2RGB[3][3] = {
-		{ (1219569.0 / 395920.0), (-608687.0 / 395920.0), (-107481.0 / 197960.0) },
-		{ (-80960619.0 / 87888100.0),  (82435961.0 / 43944050.0),  (3976797.0 / 87888100.0) },
-		{ (93813.0 / 1774030.0), (-180961.0 / 887015.0), (107481.0 / 93370.0) } };
+		{ (1219569.0 / 395920.0),     (-608687.0 / 395920.0),    (-107481.0 / 197960.0) },
+		{ (-80960619.0 / 87888100.0), (82435961.0 / 43944050.0), (3976797.0 / 87888100.0) },
+		{ (93813.0 / 1774030.0),      (-180961.0 / 887015.0),    (107481.0 / 93370.0) } };
 
-	// For every pixel in our end image..
+	// For every pixel in our end image...
 	for (int x = 0; x < specImg[0].img.rows; x++)
 	{
 		for(int y = 0; y < specImg[0].img.cols; y++)
 		{
 			float XYZ[3] = { 0 }; // Blank 3dim float array 
 
-			/* Wavelength Spectrum to XYZ Colorspace*/
+			// Wavelength Spectrum to XYZ Colorspace
 			float Ysum = 0;
 			for (int i = 0; i < 36; ++i) // Each pixel uses 36 samples (380nm to 730nm by 10's)
 			{
@@ -228,7 +251,7 @@ Mat SpecImage::getRGB()
 
 			float colorPixel[3] = { 0 }; // Blank RGB pixel (in floating point)
 
-			/* Convert XYZ Colorspace to RGB for this pixel */
+			// Convert XYZ Colorspace to RGB for this pixel
 			// Red = (const) * xyz[0] + (const) * xyz[1] + (const) * xyz[2]
 			colorPixel[0] = XYZ2RGB[0][0] * XYZ[0] + XYZ2RGB[0][1] * XYZ[1] + XYZ2RGB[0][2] * XYZ[2];
 			colorPixel[1] = XYZ2RGB[1][0] * XYZ[0] + XYZ2RGB[1][1] * XYZ[1] + XYZ2RGB[1][2] * XYZ[2];
@@ -241,11 +264,14 @@ Mat SpecImage::getRGB()
 		}
 	}
 
-	cout << "RGB Image created" << endl;
-
 	return rgb;
 }
 
+/*
+Creates a composite image by stacking three specific wavelength images ontop of each other
+into a single composite image where the first, second, and third wavelength-images are
+turned into the red, green, and blue channels of the compositie image respectively.
+*/
 Mat SpecImage::getComposite(int redWavelength, int blueWavelength, int greenWavelength)
 {
 	Mat redVal;
@@ -273,7 +299,14 @@ Mat SpecImage::getComposite(int redWavelength, int blueWavelength, int greenWave
 	return composite;
 }
 
-// STATIC method to make a composite given three grayscale images
+/*
+STATIC method to make a composite image given three grayscale images where
+the first, second, and third images make up the red, blue, and green channels
+of the composite image respectively.
+
+NOTE - The returned pointer is created in this function and must be deleted by the
+calling function.
+*/
 Mat SpecImage::makeComposite(Mat redImage, Mat blueImage, Mat greenImage)
 {
 	Mat redVal;
