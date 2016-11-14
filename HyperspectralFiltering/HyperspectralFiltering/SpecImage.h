@@ -31,14 +31,14 @@ class SpecImage
 		void LoadFromFile(string fileName);
 
 		// Returns the image of a given wavelength
-		Mat getImage(int wavelength) const;
+		const Mat* getImage(int wavelength) const;
 
 		// Returns the RGB estimation of this image.
 		// This is achieved by supercomposing the wavelengths 380nm through 730nm.
-		Mat getRGB();
+		const Mat* getRGB();
 
 		// Returns a composite image of the given three wavelengths.
-		Mat getComposite(int redWavelength, int blueWavelength, int greenWavelength);
+		Mat* getComposite(int redWavelength, int blueWavelength, int greenWavelength);
 
 		// Utility function to create a composite image, given three greyscale images.
 		// Returns a composite image given three grayscale images (such as those given via

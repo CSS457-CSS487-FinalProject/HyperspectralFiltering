@@ -88,9 +88,13 @@ void SpecImage::LoadFromFile(string fileName)
 	} // end for-loop of spectral images.
 }
 
-// Given a wavelength to get from the spectral image, return the nearest saved
-//  wavelength matrix 
-Mat SpecImage::getImage(int wavelength) const
+/*
+Fetches a single spectral image, which is specified by its wavelength.
+Since the images are specified by a bounding set of wavelengths, the nearest
+wavelength is returned since an image for that exact wavelength may not exist.
+Returns the nearest wavelength image (OpenCV Mat).
+*/
+const Mat* SpecImage::getImage(int wavelength) const
 {
 	// Return something here on invalid params (-1, less than 355ish, etc)
 
@@ -123,12 +127,12 @@ Mat SpecImage::getImage(int wavelength) const
 
 	//cout << "Wavelength requested:\t" << wavelength << "\t Wavelength served:\t" << specImg[index].wavelength << endl;
 
-	return specImg[index].img;
+	return &(specImg[index].img);
 }
 
 
 // Return the RGB estimation of this hyperspectral image
-Mat SpecImage::getRGB()
+const Mat* SpecImage::getRGB()
 {
 	cout << "Creating RGB Image.." << endl;
 	Mat_<Vec3b> rgb(specImg[0].img.rows, specImg[0].img.cols);
@@ -232,8 +236,8 @@ Mat SpecImage::getRGB()
 			{
 				// i*2 = wavelength because colorMF is by 5nm, whereas specData is by 10nm
 				// Add to XYZ[0] -> our CIE X color at [wavelength] * img[wavelength][x][y]
-				Mat thisWave = getImage(i * 10 + 380);
-				float intensity = static_cast<float>(thisWave.at<unsigned short>(x, y))/maxShort;
+				const Mat* thisWave = getImage(i * 10 + 380);
+				float intensity = static_cast<float>(thisWave->at<unsigned short>(x, y))/maxShort;
 				XYZ[0] += colorMatchingFunc[i * 2][1] * intensity;
 				XYZ[1] += colorMatchingFunc[i * 2][2] * intensity;
 				XYZ[2] += colorMatchingFunc[i * 2][3] * intensity;
@@ -260,10 +264,10 @@ Mat SpecImage::getRGB()
 
 	cout << "RGB Image created" << endl;
 
-	return rgb;
+	return &rgb;
 }
 
-Mat SpecImage::getComposite(int redWavelength, int blueWavelength, int greenWavelength)
+Mat* SpecImage::getComposite(int redWavelength, int blueWavelength, int greenWavelength)
 {
 	Mat redVal;
 	Mat greenVal;
@@ -274,18 +278,18 @@ Mat SpecImage::getComposite(int redWavelength, int blueWavelength, int greenWave
 	int Max = 256 * 16;
 	int Min = 0;
 
-	getImage(redWavelength).convertTo(redVal, CV_8U, 255.0 / (Max - Min), -255.0*Min / (Max - Min));
-	getImage(blueWavelength).convertTo(greenVal, CV_8U, 255.0 / (Max - Min), -255.0*Min / (Max - Min));
-	getImage(greenWavelength).convertTo(blueVal, CV_8U, 255.0 / (Max - Min), -255.0*Min / (Max - Min));
+	getImage(redWavelength)->convertTo(redVal, CV_8U, 255.0 / (Max - Min), -255.0*Min / (Max - Min));
+	getImage(blueWavelength)->convertTo(greenVal, CV_8U, 255.0 / (Max - Min), -255.0*Min / (Max - Min));
+	getImage(greenWavelength)->convertTo(blueVal, CV_8U, 255.0 / (Max - Min), -255.0*Min / (Max - Min));
 
 	mergeArray.push_back(blueVal);
 	mergeArray.push_back(greenVal);
 	mergeArray.push_back(redVal);
 
-	Mat_<Vec3b> composite;
+	Mat_<Vec3b>* composite = new Mat_<Vec3b>();
 
 	//merge(mergeArray, composite); // This will not work in Release mode
-	merge(&mergeArray[0], mergeArray.size(), composite);
+	merge(&mergeArray[0], mergeArray.size(), *composite);
 
 	return composite;
 }
