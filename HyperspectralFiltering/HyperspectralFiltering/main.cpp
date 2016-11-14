@@ -81,6 +81,6 @@ int main(int argc, char* argv[])
 	imwrite("RedVeg.png", redVegetation);
 	imwrite("SWIR.png", swir);
 	waitKey(0);
-	
+
 	return 0;
 }

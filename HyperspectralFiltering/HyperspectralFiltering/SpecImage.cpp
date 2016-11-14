@@ -94,15 +94,14 @@ Since the images are specified by a bounding set of wavelengths, the nearest
 wavelength is returned since an image for that exact wavelength may not exist.
 Returns the nearest wavelength image (OpenCV Mat).
 */
-const Mat* SpecImage::getImage(int wavelength) const
+Mat SpecImage::getImage(int wavelength) const
 {
 	if (wavelength < 350 || wavelength > 2600)
 	{
-		return NULL;
+		//return NULL;
 	}
-	// Return something here on invalid params (-1, less than 355ish, etc)
 
-	// Estimate the closest wavelength image..
+	// Estimate the closest wavelength image
 	int index;
 	if (wavelength <= 844)
 	{
@@ -129,16 +128,15 @@ const Mat* SpecImage::getImage(int wavelength) const
 		}
 	}
 
-	//cout << "Wavelength requested:\t" << wavelength << "\t Wavelength served:\t" << specImg[index].wavelength << endl;
-
-	return &(specImg[index].img);
+	return specImg[index].img;
 }
 
 
-// Return the RGB estimation of this hyperspectral image
-const Mat* SpecImage::getRGB()
+/*
+Returns an RGB image estimation of this hyperspectral image.
+*/
+Mat SpecImage::getRGB()
 {
-	cout << "Creating RGB Image.." << endl;
 	Mat_<Vec3b> rgb(specImg[0].img.rows, specImg[0].img.cols);
 
 	// End-Image Gamma 
@@ -223,25 +221,25 @@ const Mat* SpecImage::getRGB()
 
 	// CIE RGB Conversion matrix
 	float XYZ2RGB[3][3] = {
-		{ (1219569.0 / 395920.0), (-608687.0 / 395920.0), (-107481.0 / 197960.0) },
-		{ (-80960619.0 / 87888100.0),  (82435961.0 / 43944050.0),  (3976797.0 / 87888100.0) },
-		{ (93813.0 / 1774030.0), (-180961.0 / 887015.0), (107481.0 / 93370.0) } };
+		{ (1219569.0 / 395920.0),     (-608687.0 / 395920.0),    (-107481.0 / 197960.0) },
+		{ (-80960619.0 / 87888100.0), (82435961.0 / 43944050.0), (3976797.0 / 87888100.0) },
+		{ (93813.0 / 1774030.0),      (-180961.0 / 887015.0),    (107481.0 / 93370.0) } };
 
-	// For every pixel in our end image..
+	// For every pixel in our end image...
 	for (int x = 0; x < specImg[0].img.rows; x++)
 	{
 		for(int y = 0; y < specImg[0].img.cols; y++)
 		{
 			float XYZ[3] = { 0 }; // Blank 3dim float array 
 
-			/* Wavelength Spectrum to XYZ Colorspace*/
+			// Wavelength Spectrum to XYZ Colorspace
 			float Ysum = 0;
 			for (int i = 0; i < 36; ++i) // Each pixel uses 36 samples (380nm to 730nm by 10's)
 			{
 				// i*2 = wavelength because colorMF is by 5nm, whereas specData is by 10nm
 				// Add to XYZ[0] -> our CIE X color at [wavelength] * img[wavelength][x][y]
-				const Mat* thisWave = getImage(i * 10 + 380);
-				float intensity = static_cast<float>(thisWave->at<unsigned short>(x, y))/maxShort;
+				Mat thisWave = getImage(i * 10 + 380);
+				float intensity = static_cast<float>(thisWave.at<unsigned short>(x, y))/maxShort;
 				XYZ[0] += colorMatchingFunc[i * 2][1] * intensity;
 				XYZ[1] += colorMatchingFunc[i * 2][2] * intensity;
 				XYZ[2] += colorMatchingFunc[i * 2][3] * intensity;
@@ -253,7 +251,7 @@ const Mat* SpecImage::getRGB()
 
 			float colorPixel[3] = { 0 }; // Blank RGB pixel (in floating point)
 
-			/* Convert XYZ Colorspace to RGB for this pixel */
+			// Convert XYZ Colorspace to RGB for this pixel
 			// Red = (const) * xyz[0] + (const) * xyz[1] + (const) * xyz[2]
 			colorPixel[0] = XYZ2RGB[0][0] * XYZ[0] + XYZ2RGB[0][1] * XYZ[1] + XYZ2RGB[0][2] * XYZ[2];
 			colorPixel[1] = XYZ2RGB[1][0] * XYZ[0] + XYZ2RGB[1][1] * XYZ[1] + XYZ2RGB[1][2] * XYZ[2];
@@ -266,12 +264,15 @@ const Mat* SpecImage::getRGB()
 		}
 	}
 
-	cout << "RGB Image created" << endl;
-
-	return &rgb;
+	return rgb;
 }
 
-Mat* SpecImage::getComposite(int redWavelength, int blueWavelength, int greenWavelength)
+/*
+Creates a composite image by stacking three specific wavelength images ontop of each other
+into a single composite image where the first, second, and third wavelength-images are
+turned into the red, green, and blue channels of the compositie image respectively.
+*/
+Mat SpecImage::getComposite(int redWavelength, int blueWavelength, int greenWavelength)
 {
 	Mat redVal;
 	Mat greenVal;
@@ -282,23 +283,30 @@ Mat* SpecImage::getComposite(int redWavelength, int blueWavelength, int greenWav
 	int Max = 256 * 16;
 	int Min = 0;
 
-	getImage(redWavelength)->convertTo(redVal, CV_8U, 255.0 / (Max - Min), -255.0*Min / (Max - Min));
-	getImage(blueWavelength)->convertTo(greenVal, CV_8U, 255.0 / (Max - Min), -255.0*Min / (Max - Min));
-	getImage(greenWavelength)->convertTo(blueVal, CV_8U, 255.0 / (Max - Min), -255.0*Min / (Max - Min));
+	getImage(redWavelength).convertTo(redVal, CV_8U, 255.0 / (Max - Min), -255.0*Min / (Max - Min));
+	getImage(blueWavelength).convertTo(greenVal, CV_8U, 255.0 / (Max - Min), -255.0*Min / (Max - Min));
+	getImage(greenWavelength).convertTo(blueVal, CV_8U, 255.0 / (Max - Min), -255.0*Min / (Max - Min));
 
 	mergeArray.push_back(blueVal);
 	mergeArray.push_back(greenVal);
 	mergeArray.push_back(redVal);
 
-	Mat_<Vec3b>* composite = new Mat_<Vec3b>();
+	Mat_<Vec3b> composite;
 
 	//merge(mergeArray, composite); // This will not work in Release mode
-	merge(&mergeArray[0], mergeArray.size(), *composite);
+	merge(&mergeArray[0], mergeArray.size(), composite);
 
 	return composite;
 }
 
-// STATIC method to make a composite given three grayscale images
+/*
+STATIC method to make a composite image given three grayscale images where
+the first, second, and third images make up the red, blue, and green channels
+of the composite image respectively.
+
+NOTE - The returned pointer is created in this function and must be deleted by the
+calling function.
+*/
 Mat SpecImage::makeComposite(Mat redImage, Mat blueImage, Mat greenImage)
 {
 	Mat redVal;

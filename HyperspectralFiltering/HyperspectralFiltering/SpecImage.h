@@ -31,19 +31,28 @@ class SpecImage
 		void LoadFromFile(string fileName);
 
 		// Returns the image of a given wavelength
-		const Mat* getImage(int wavelength) const;
+		Mat getImage(int wavelength) const;
 
 		// Returns the RGB estimation of this image.
 		// This is achieved by supercomposing the wavelengths 380nm through 730nm.
-		const Mat* getRGB();
+		Mat getRGB();
 
-		// Returns a composite image of the given three wavelengths.
-		Mat* getComposite(int redWavelength, int blueWavelength, int greenWavelength);
+		/*
+		Creates a composite image by stacking three specific wavelength images ontop of each other
+		into a single composite image where the first, second, and third wavelength-images are
+		turned into the red, green, and blue channels of the compositie image respectively.
+		*/
+		Mat getComposite(int redWavelength, int blueWavelength, int greenWavelength);
 
-		// Utility function to create a composite image, given three greyscale images.
-		// Returns a composite image given three grayscale images (such as those given via
-		// getImage()) Expects the same dimensions, and converts them to CV_8U
-		static Mat makeComposite(Mat redImage, Mat blueImage, Mat greenImage);
+		/*
+		STATIC method to make a composite image given three grayscale images where
+		the first, second, and third images make up the red, blue, and green channels
+		of the composite image respectively.
+
+		Returns a composite image given three grayscale images (such as those given via
+		getImage()) Expects the same dimensions, and converts them to CV_8U
+		*/
+		Mat makeComposite(Mat redImage, Mat blueImage, Mat greenImage);
 	private:
 		struct imgData
 		{
