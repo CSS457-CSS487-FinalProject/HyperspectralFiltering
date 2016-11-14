@@ -96,6 +96,10 @@ Returns the nearest wavelength image (OpenCV Mat).
 */
 const Mat* SpecImage::getImage(int wavelength) const
 {
+	if (wavelength < 350 || wavelength > 2600)
+	{
+		return NULL;
+	}
 	// Return something here on invalid params (-1, less than 355ish, etc)
 
 	// Estimate the closest wavelength image..
