@@ -131,6 +131,32 @@ Mat SpecImage::getImage(int wavelength) const
 	return specImg[index].img;
 }
 
+// Returns the height of the hyperspectral image (height of a single image).
+int SpecImage::getRows() const
+{
+	if (specImg.size() == 0)
+	{
+		return -1;
+	}
+	return specImg[0].img.rows;
+}
+
+// Returns the width of the hyperspectral image (width of a single image).
+int SpecImage::getCols() const
+{
+	if (specImg.size() == 0)
+	{
+		return -1;
+	}
+	return specImg[0].img.cols;
+}
+
+// Returns the number of wavelengths present in the hyperspectral image.
+int SpecImage::getDepth() const
+{
+	return specImg.size();
+}
+
 
 /*
 Returns an RGB image estimation of this hyperspectral image.

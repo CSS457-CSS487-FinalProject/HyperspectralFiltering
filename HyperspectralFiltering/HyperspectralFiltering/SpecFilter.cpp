@@ -116,6 +116,8 @@ filter.
 Mat SpecFilter::filter(const SpecImage& image) const
 {
 	map<double, double>::const_iterator i = filterData.begin();
+	int dims = {image.}
+	Mat histogram;
 	while (i != filterData.end)
 	{
 		int wavelength = static_cast<int>(i->first);
