@@ -76,8 +76,8 @@ class SpecFilter
 		  Returns a greyscale image where black and dark pixels are "poor matches" and bright or
 		  white pixels are "strong matches."
 		  @param image Hyperspectral image to run this filter against.
-		  @return Greyscale image where bright/white pixels correspond to positive results from this
-		  filter.
+		  @return Greyscale image (type CV_8UC1) where bright/white pixels correspond to positive
+		  results from this filter.
 		*/
 		Mat filter(const SpecImage& image) const;
 
