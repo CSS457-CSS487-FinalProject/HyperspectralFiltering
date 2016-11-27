@@ -11,8 +11,6 @@ are easier to manage and fetch.
 
 #include <string>
 
-#include "SpecFilter.h"
-
 using namespace cv;
 using namespace std;
 
@@ -32,6 +30,15 @@ class SpecImage
 
 		// Returns the image of a given wavelength
 		Mat getImage(int wavelength) const;
+
+		// Returns the height of the hyperspectral image (height of a single image).
+		int getRows() const;
+
+		// Returns the width of the hyperspectral image (width of a single image).
+		int getCols() const;
+
+		// Returns the number of wavelengths present in the hyperspectral image.
+		int getDepth() const;
 
 		// Returns the RGB estimation of this image.
 		// This is achieved by supercomposing the wavelengths 380nm through 730nm.

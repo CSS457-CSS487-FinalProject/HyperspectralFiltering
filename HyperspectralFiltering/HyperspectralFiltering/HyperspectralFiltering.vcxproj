@@ -130,6 +130,9 @@
     <ClInclude Include="SpecFilter.h" />
     <ClInclude Include="SpecImage.h" />
   </ItemGroup>
+  <ItemGroup>
+    <Text Include="douglas_fir.txt" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

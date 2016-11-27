@@ -131,6 +131,32 @@ Mat SpecImage::getImage(int wavelength) const
 	return specImg[index].img;
 }
 
+// Returns the height of the hyperspectral image (height of a single image).
+int SpecImage::getRows() const
+{
+	if (specImg.size() == 0)
+	{
+		return -1;
+	}
+	return specImg[0].img.rows;
+}
+
+// Returns the width of the hyperspectral image (width of a single image).
+int SpecImage::getCols() const
+{
+	if (specImg.size() == 0)
+	{
+		return -1;
+	}
+	return specImg[0].img.cols;
+}
+
+// Returns the number of wavelengths present in the hyperspectral image.
+int SpecImage::getDepth() const
+{
+	return static_cast<int>(specImg.size());
+}
+
 
 /*
 Returns an RGB image estimation of this hyperspectral image.
@@ -283,9 +309,9 @@ Mat SpecImage::getComposite(int redWavelength, int blueWavelength, int greenWave
 	int Max = 256 * 16;
 	int Min = 0;
 
-	getImage(redWavelength).convertTo(redVal, CV_8U, 255.0 / (Max - Min), -255.0*Min / (Max - Min));
-	getImage(blueWavelength).convertTo(greenVal, CV_8U, 255.0 / (Max - Min), -255.0*Min / (Max - Min));
-	getImage(greenWavelength).convertTo(blueVal, CV_8U, 255.0 / (Max - Min), -255.0*Min / (Max - Min));
+	getImage(redWavelength).convertTo(redVal, CV_8U);
+	getImage(blueWavelength).convertTo(greenVal, CV_8U);
+	getImage(greenWavelength).convertTo(blueVal, CV_8U);
 
 	mergeArray.push_back(blueVal);
 	mergeArray.push_back(greenVal);
