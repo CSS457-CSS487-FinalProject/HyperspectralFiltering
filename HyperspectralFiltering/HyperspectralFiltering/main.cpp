@@ -86,7 +86,7 @@ void TaranTest()
 
 void SpecFilterTest()
 {
-	SpecImage hyperImage("EO1H0420342016268110PF_1T");
+	SpecImage hyperImage("EO1H0010492002110110KZ_1T");
 	waitKey(0);
 	SpecFilter filter;
 	filter.LoadFromFile("douglas_fir.txt");
