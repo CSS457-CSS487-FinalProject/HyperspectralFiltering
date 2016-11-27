@@ -15,6 +15,7 @@ Date: November 2016
 #include <opencv2/highgui/highgui.hpp>
 #include <iostream>
 
+#include "SpecFilter.h"
 #include "SpecImage.h"
 
 using namespace cv;
@@ -48,8 +49,8 @@ string type2str(int type)
 	return r;
 }
 
-int main(int argc, char* argv[])
-{	
+void TaranTest()
+{
 	SpecImage newImg("EO1H0420342016268110PF_1T");
 
 	Mat colorComposite = newImg.getComposite(641, 580, 509); // Hyperion reccomended color composite
@@ -65,7 +66,7 @@ int main(int argc, char* argv[])
 
 	Mat redVegetation = grayscale.clone();
 	cvtColor(redVegetation, redVegetation, CV_GRAY2BGR); // Return to 3 channels
-	
+
 	for (int r = 0; r < redVegetation.rows; r++)
 	{
 		for (int c = 0; c < redVegetation.cols; c++)
@@ -81,6 +82,26 @@ int main(int argc, char* argv[])
 	imwrite("RedVeg.png", redVegetation);
 	imwrite("SWIR.png", swir);
 	waitKey(0);
+}
 
+void SpecFilterTest()
+{
+	SpecImage hyperImage("EO1H0420342016268110PF_1T");
+	waitKey(0);
+	SpecFilter filter;
+	filter.LoadFromFile("douglas_fir.txt");
+	Mat result = filter.filter(hyperImage);
+
+	imshow("Original", hyperImage.getComposite(650, 580, 508));
+	imwrite("Original.png", hyperImage.getComposite(650, 580, 508));
+	imshow("Targets", result);
+	imwrite("Fir Trees.png", result);
+	waitKey(0);
+}
+
+int main(int argc, char* argv[])
+{	
+	//TaranTest();
+	SpecFilterTest();
 	return 0;
 }

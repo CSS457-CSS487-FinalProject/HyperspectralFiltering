@@ -33,7 +33,7 @@ Returns the reflectance intensity of the filter at the specified wavelength.
 double SpecFilter::GetIntensityMicro(const double& wavelength) const
 {
 	map<double, double>::const_iterator iter = filterData.find(wavelength);
-	if (iter == filterData.end)
+	if (iter == filterData.end())
 	{
 		return 0;
 	}
@@ -84,12 +84,12 @@ bool SpecFilter::LoadFromFile(string fileName)
 	while (!inputFile.eof())
 	{
 		getline(inputFile, line);
-		if (lineCount < 17) // Data starts at line 17
+		if (lineCount < 16) // Data starts at line 16
 		{
 			++lineCount;
 			continue;
 		}
-		if (line.find("-1.23e34") == string::npos) // Indicates data does not exist.
+		if (line.find("-1.23e34") != string::npos) // Indicates data does not exist.
 		{
 			continue;
 		}
@@ -115,19 +115,19 @@ positive results from this filter.
 */
 Mat SpecFilter::filter(const SpecImage& hyperImage) const
 {
-	map<double, double>::const_iterator i = filterData.begin();
 
 	int rows = hyperImage.getRows();
 	int cols = hyperImage.getCols();
 	int dims[] = { rows, cols };
 	Mat histogram(2, dims, CV_64F, Scalar::all(0));
 
-	while (i != filterData.end)
+	map<double, double>::const_iterator i;
+	for (i = filterData.begin(); i != filterData.end(); ++i)
 	{
 		int wavelength = static_cast<int>(i->first * 1000); // convert back to nanometers
 		double searchReflectance = i->second;
-		Mat image = hyperImage.getImage(wavelength);
-		image.convertTo(image, CV_8UC1);
+		Mat image;
+		hyperImage.getImage(wavelength).convertTo(image, CV_8UC1);
 
 		for (int col = 0; col < cols; ++col)
 		{
@@ -156,9 +156,9 @@ Mat SpecFilter::filter(const SpecImage& hyperImage) const
 		}
 	}
 
-	// There are 224 possible channels (wavelengths). If we set a max allowable difference of 2.5% intensity
-	// per channel, that's 560 total possible difference.
-	const double MATCH_MAX = 560;
+	// There are 224 possible channels (wavelengths). If we set a max allowable difference of 0.20% intensity
+	// per channel, that's ~40 total possible difference.
+	const double MATCH_MAX = 40.0;
 	Mat resultImage(2, dims, CV_8UC1, Scalar::all(0));
 	for (int col = 0; col < cols; ++col)
 	{

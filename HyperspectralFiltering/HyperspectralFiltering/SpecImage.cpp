@@ -154,7 +154,7 @@ int SpecImage::getCols() const
 // Returns the number of wavelengths present in the hyperspectral image.
 int SpecImage::getDepth() const
 {
-	return specImg.size();
+	return static_cast<int>(specImg.size());
 }
 
 
@@ -309,9 +309,9 @@ Mat SpecImage::getComposite(int redWavelength, int blueWavelength, int greenWave
 	int Max = 256 * 16;
 	int Min = 0;
 
-	getImage(redWavelength).convertTo(redVal, CV_8U, 255.0 / (Max - Min), -255.0*Min / (Max - Min));
-	getImage(blueWavelength).convertTo(greenVal, CV_8U, 255.0 / (Max - Min), -255.0*Min / (Max - Min));
-	getImage(greenWavelength).convertTo(blueVal, CV_8U, 255.0 / (Max - Min), -255.0*Min / (Max - Min));
+	getImage(redWavelength).convertTo(redVal, CV_8U);
+	getImage(blueWavelength).convertTo(greenVal, CV_8U);
+	getImage(greenWavelength).convertTo(blueVal, CV_8U);
 
 	mergeArray.push_back(blueVal);
 	mergeArray.push_back(greenVal);

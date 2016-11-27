@@ -79,7 +79,7 @@ class SpecFilter
 		  @return Greyscale image (type CV_8UC1) where bright/white pixels correspond to positive
 		  results from this filter.
 		*/
-		Mat filter(const SpecImage& image) const;
+		Mat filter(const SpecImage& hyperImage) const;
 
 	private:
 		map<double, double> filterData;

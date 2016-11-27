@@ -11,8 +11,6 @@ are easier to manage and fetch.
 
 #include <string>
 
-#include "SpecFilter.h"
-
 using namespace cv;
 using namespace std;
 
