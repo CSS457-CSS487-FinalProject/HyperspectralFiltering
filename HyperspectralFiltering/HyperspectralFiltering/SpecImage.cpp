@@ -72,15 +72,15 @@ void SpecImage::LoadFromFile(string fileName)
 		{
 			if (i / 100 > 0)
 			{
-				img = imread(fileName + "_B" + to_string(i) + ".TIF", -1);
+				img = imread(fileName + "_B" + to_string(i) + "_L1GST.TIF", -1);
 			}
 			else if (i / 10 > 0)
 			{
-				img = imread(fileName + "_B0" + to_string(i) + ".TIF", -1);
+				img = imread(fileName + "_B0" + to_string(i) + "_L1GST.TIF", -1);
 			}
 			else
 			{
-				img = imread(fileName + "_B00" + to_string(i) + ".TIF", -1);
+				img = imread(fileName + "_B00" + to_string(i) + "_L1GST.TIF", -1);
 			}
 		}
 
