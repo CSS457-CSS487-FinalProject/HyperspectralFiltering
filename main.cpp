@@ -64,22 +64,26 @@ void TaranTest()
 
 	cvtColor(colorComposite, grayscale, CV_RGB2GRAY); // Convert to gray
 
-	Mat redVegetation = grayscale.clone();
-	cvtColor(redVegetation, redVegetation, CV_GRAY2BGR); // Return to 3 channels
+	Mat redVegetationGray = grayscale.clone();
+	Mat redVegetationColor = colorComposite.clone();
+	cvtColor(redVegetationGray, redVegetationGray, CV_GRAY2BGR); // Return to 3 channels
 
-	for (int r = 0; r < redVegetation.rows; r++)
+	for (int r = 0; r < redVegetationColor.rows; r++)
 	{
-		for (int c = 0; c < redVegetation.cols; c++)
+		for (int c = 0; c < redVegetationColor.cols; c++)
 		{
-			redVegetation.at<Vec3b>(r, c)[2] = max(veg.at<uchar>(r, c), grayscale.at<uchar>(r, c));
+			redVegetationColor.at<Vec3b>(r, c)[2] = max(veg.at<uchar>(r, c), colorComposite.at<Vec3b>(r, c)[2]);
+			redVegetationGray.at<Vec3b>(r, c)[2] = max(veg.at<uchar>(r, c), grayscale.at<uchar>(r, c));
 		}
 	}
 
 	imshow("Color Composite", colorComposite);
-	imshow("Red Veggies", redVegetation);
+	imshow("Red Veggies Gray", redVegetationGray);
+	imshow("Red Veggies Color", redVegetationColor);
 	imshow("SWIR", swir);
 	imwrite("ColorComposite.png", colorComposite);
-	imwrite("RedVeg.png", redVegetation);
+	imwrite("RedVegColor.png", redVegetationColor);
+	imwrite("RedVegGray.png", redVegetationGray);
 	imwrite("SWIR.png", swir);
 	waitKey(0);
 }
