@@ -51,7 +51,7 @@ string type2str(int type)
 
 void TaranTest()
 {
-	SpecImage newImg("EO1H0420342016268110PF_1T");
+	SpecImage newImg("EO1H0010492002110110KZ_1T");
 
 	Mat colorComposite = newImg.getComposite(641, 580, 509); // Hyperion reccomended color composite
 	Mat swir = newImg.getComposite(1954, 1629, 1074); // Short Wavelength InfraRed (SWIR)
@@ -59,7 +59,7 @@ void TaranTest()
 	Mat grayscale;
 	Mat veg = newImg.getImage(855); // 16US1
 
-	short arbitraryThreshold = 32768 / 12;
+	short arbitraryThreshold = 32768 / 64;
 	veg.convertTo(veg, CV_8UC1, 255.0 / arbitraryThreshold);
 
 	cvtColor(colorComposite, grayscale, CV_RGB2GRAY); // Convert to gray
@@ -101,7 +101,7 @@ void SpecFilterTest()
 
 int main(int argc, char* argv[])
 {	
-	//TaranTest();
-	SpecFilterTest();
+	TaranTest();
+	//SpecFilterTest();
 	return 0;
 }
