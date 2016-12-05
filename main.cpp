@@ -169,9 +169,15 @@ void christianTest()
 }
 
 int main(int argc, char* argv[])
+<<<<<<< HEAD
 {
 	//TaranTest();
 	//SpecFilterTest();
 	christianTest();
+=======
+{	
+	TaranTest();
+	//SpecFilterTest();
+>>>>>>> ab7f0bf182355de9f0cb1933b0d4732669a0d189
 	return 0;
 }
