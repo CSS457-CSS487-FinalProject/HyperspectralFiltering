@@ -128,7 +128,10 @@ Mat SpecFilter::filter(const SpecImage& hyperImage) const
 		double searchReflectance = i->second;
 		Mat image;
 		hyperImage.getImage(wavelength).convertTo(image, CV_8UC1);
-
+		if (image.rows == 0 && image.cols == 0 )
+		{
+			continue;
+		}
 		for (int col = 0; col < cols; ++col)
 		{
 			for (int row = 0; row < rows; ++row)
@@ -170,7 +173,15 @@ Mat SpecFilter::filter(const SpecImage& hyperImage) const
 				continue;
 			}
 			uchar pixelValue = 255 - static_cast<uchar>(255 * (val / MATCH_MAX));
-			resultImage.at<uchar>(row, col) = pixelValue;
+			//resultImage.at<uchar>(row, col) = pixelValue;
+			if (pixelValue > 128)
+			{
+				resultImage.at<uchar>(row, col) = 0;
+			}
+			else
+			{
+				resultImage.at<uchar>(row, col) = 255;
+			}
 		}
 	}
 

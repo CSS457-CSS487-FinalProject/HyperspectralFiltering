@@ -96,14 +96,14 @@ Returns the nearest wavelength image (OpenCV Mat).
 */
 Mat SpecImage::getImage(int wavelength) const
 {
-	if (wavelength < 350 || wavelength > 2600)
-	{
-		//return NULL;
+	if (wavelength < 356 || wavelength > 2600)
+	{	
+		return  Mat(0, 0, CV_64F, Scalar::all(0));
 	}
 
 	// Estimate the closest wavelength image
 	int index;
-	if (wavelength <= 844)
+	if (wavelength <= 852)
 	{
 		index = static_cast<int>(round((wavelength - 355.59f)/10.175f));
 	}
@@ -127,7 +127,6 @@ Mat SpecImage::getImage(int wavelength) const
 			index = index2;
 		}
 	}
-
 	return specImg[index].img;
 }
 
