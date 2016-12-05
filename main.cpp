@@ -173,5 +173,4 @@ int main(int argc, char* argv[])
 	//TaranTest();
 	//SpecFilterTest();
 	christianTest();
-	return 0;
 }
