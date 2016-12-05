@@ -47,6 +47,115 @@ string type2str(int type)
 	return r;
 }
 
+Mat img;
+Mat thresh;
+Mat opening;
+Mat element;
+int morph_elem = 0;
+int morph_size = 0;
+int morph_operator = 0;
+
+void Morphology_Operations(int, void*)
+{
+	// Since MORPH_X : 2,3,4,5 and 6
+	int operation = morph_operator + 2;
+
+	element = getStructuringElement(morph_elem, Size(2 * morph_size + 1, 2 * morph_size + 1), Point(morph_size, morph_size));
+
+	// Apply the specified morphology operation
+	morphologyEx(thresh, opening, operation, element);
+	imshow("Window", opening);
+}
+
+void WatershedTest()
+{
+	// Load the image
+	//SpecImage hyperImage("EO1H0010492002110110KZ_1T");
+	//img = hyperImage.getComposite(650, 580, 508);
+	//img = hyperImage.getComposite(1954, 1629, 1074); // Short Wavelength InfraRed (SWIR)
+
+	Mat gray;
+	cvtColor(img, gray, CV_BGR2GRAY);
+
+	threshold(gray, thresh, 0, 255, THRESH_BINARY_INV + THRESH_OTSU);
+
+	// noise removal
+	namedWindow("Window", CV_WINDOW_AUTOSIZE);
+	createTrackbar("Operator:\n 0: Opening - 1: Closing \n 2: Gradient - 3: Top Hat \n 4: Black Hat", "Window", &morph_operator, 4, Morphology_Operations);
+	createTrackbar("Element:\n 0: Rect - 1: Cross - 2: Ellipse", "Window",
+		&morph_elem, 2,
+		Morphology_Operations);
+	createTrackbar("Kernel size:\n 2n +1", "Window",
+		&morph_size, 21,
+		Morphology_Operations);
+	Morphology_Operations(0, 0);
+	waitKey(0);
+
+	// sure background area
+	Mat sure_bg;
+	Mat kernel(3, 3, CV_8UC1);
+	kernel = cv::Scalar(1);
+	dilate(opening, sure_bg, kernel, Point(-1, -1), 3);
+
+	// Finding sure foreground area
+	Mat dist_transform;
+	double maxVal;
+	double minVal;
+	minMaxLoc(opening, &minVal, &maxVal);
+	threshold(opening, opening, 50, 255, CV_THRESH_BINARY);
+
+	distanceTransform(opening, dist_transform, DIST_L2, 5);
+	Mat sure_fg;
+	minMaxLoc(dist_transform, &minVal, &maxVal);
+	threshold(dist_transform, sure_fg, 4, 255, THRESH_TOZERO);
+
+	// Finding unknown region
+	sure_fg.convertTo(sure_fg, CV_8UC1);
+	//cvtColor(sure_bg, sure_bg, CV_BGR2GRAY);
+	Mat unknown;
+	subtract(sure_bg, sure_fg, unknown);
+
+	// Marker labelling
+	Mat markers;
+	connectedComponents(sure_fg, markers);
+
+	// Add one to all labels so that sure background is not 0, but 1
+	// Now, mark the region of unknown with zero
+	for (int r = 0; r < markers.rows; r++)
+	{
+		for (int c = 0; c < markers.cols; c++)
+		{
+			if (unknown.at<uchar>(r, c) == 255)
+			{
+				markers.at<uchar>(r, c) = 0;
+			}
+			else
+			{
+				markers.at<uchar>(r, c) = markers.at<uchar>(r, c) + 1;
+			}
+		}
+	}
+
+	watershed(img, markers);
+
+	for (int r = 0; r < img.rows; r++)
+	{
+		for (int c = 0; c < img.cols; c++)
+		{
+			if (markers.at<char>(r, c) == -1)
+			{
+				img.at<Vec3b>(r, c)[2] = 0;
+				img.at<Vec3b>(r, c)[1] = 255;
+				img.at<Vec3b>(r, c)[0] = 0;
+			}
+		}
+	}
+
+	imshow("Watershed", img);
+	imwrite("Watershed.png", img);
+	waitKey(0);
+}
+
 void TaranTest()
 {
 	SpecImage newImg("EO1H0010492002110110KZ_1T");
@@ -103,7 +212,7 @@ void SpecFilterTest()
 
 void christianTest()
 {
-	SpecImage hyperImage("EO1H0010492002110110KZ_1T");
+	SpecImage hyperImage("EO1H0460272003133110PW");
 	waitKey(0);
 	SpecFilter filterfir;
 	filterfir.LoadFromFile("douglas_fir.txt");
@@ -157,6 +266,7 @@ void christianTest()
 		}
 	}
 
+	
 	imshow("Original", hyperImage.getComposite(650, 580, 508));
 	imwrite("Original.png", hyperImage.getComposite(650, 580, 508));
 	imshow("trees", resultTree);
@@ -165,6 +275,8 @@ void christianTest()
 	imwrite("water.png", resultWater);
 	imshow("water and trees", waterAndTrees);
 	imwrite("waterAndTrees.png", waterAndTrees);
+	
+	img = waterAndTrees;
 	waitKey(0);
 }
 
@@ -173,5 +285,6 @@ int main(int argc, char* argv[])
 	//TaranTest();
 	//SpecFilterTest();
 	christianTest();
+	WatershedTest();
 }
 
