@@ -6,7 +6,7 @@ Authors:
 Taran Christiansen - taranch@uw.edu
 Christian Gebhart  - christian.gebhart@gmail.com
 Anthony Pepe       - apepe@uw.edu
-Date: November 2016
+Date: December 2016
 */
 #include <opencv2/core/core.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
@@ -19,9 +19,13 @@ Date: November 2016
 using namespace cv;
 using namespace std;
 
-// This method takes a given OpenCV Mat type from matrix.getType() and
-//  returns the string representatiton of that type. Useful for debugging
-//  purposes (eg. determining the bit depth of TIF images).
+// type2str
+// This method takes a given OpenCV Mat type and returns the string 
+//  representatiton of that type. Useful for debugging purposes (eg. determining
+//  the bit depth of TIF images).
+// Pre-Conditions: type is the integer type of a Mat acquired by the code
+//  matrix.type().
+// Post-Conditions: The string representation of the given type is returned  
 string type2str(int type)
 {
 	string r;
@@ -31,14 +35,14 @@ string type2str(int type)
 
 	switch (depth)
 	{
-	case CV_8U:  r = "8U"; break;
-	case CV_8S:  r = "8S"; break;
-	case CV_16U: r = "16U"; break;
-	case CV_16S: r = "16S"; break;
-	case CV_32S: r = "32S"; break;
-	case CV_32F: r = "32F"; break;
-	case CV_64F: r = "64F"; break;
-	default:     r = "User"; break;
+		case CV_8U:  r = "8U"; break;
+		case CV_8S:  r = "8S"; break;
+		case CV_16U: r = "16U"; break;
+		case CV_16S: r = "16S"; break;
+		case CV_32S: r = "32S"; break;
+		case CV_32F: r = "32F"; break;
+		case CV_64F: r = "64F"; break;
+		default:     r = "User"; break;
 	}
 
 	r += "C";
@@ -47,51 +51,42 @@ string type2str(int type)
 	return r;
 }
 
-Mat img;
-Mat thresh;
-Mat opening;
-Mat element;
-int morph_elem = 0;
-int morph_size = 0;
-int morph_operator = 0;
-
-void Morphology_Operations(int, void*)
+// Watershed
+// This method applies Watershed segmetation on the supplied image, returning
+//  and image whose green channel is made up of the watershed lines. This image
+//  is shown to the user at the end of the method (with a waitKey(0)).
+// Pre-Conditions: Img is a 8UC, wherein bright values indicate areas of
+//  interest. Img is expected to be either grayscale (8UC1) or color (8UC3).
+// Post-Conditions: The original img is returned with watershed markings overlayed
+//  in pure-green (0, 255, 0). Bright areas are outlined as areas of interest. The
+//  returned Img is always 8UC3.
+// DISCLAIMER: This code is adapted from the example for watershed segmentnation
+//  written in Python at the following link:
+//  http://docs.opencv.org/3.1.0/d3/db4/tutorial_py_watershed.html
+Mat Watershed(Mat img)
 {
-	// Since MORPH_X : 2,3,4,5 and 6
-	int operation = morph_operator + 2;
+	// Create a binary threshold image
+	Mat thresh;
+	if (img.channels() == 1)
+	{
+		thresh = img;
+		cvtColor(img, img, CV_GRAY2BGR);
+	}
+	else
+	{
+		cvtColor(img, thresh, CV_BGR2GRAY);
+	}
+	threshold(thresh, thresh, 0, 255, THRESH_BINARY_INV + THRESH_OTSU);
 
-	element = getStructuringElement(morph_elem, Size(2 * morph_size + 1, 2 * morph_size + 1), Point(morph_size, morph_size));
+	// Noise removal
+	int morph_size = 8;
+	Mat element = getStructuringElement(2, Size(2 * morph_size + 1, 2 * morph_size + 1), Point(morph_size, morph_size));
 
 	// Apply the specified morphology operation
-	morphologyEx(thresh, opening, operation, element);
-	imshow("Window", opening);
-}
+	Mat opening;
+	morphologyEx(thresh, opening, 2, element);
 
-void WatershedTest()
-{
-	// Load the image
-	//SpecImage hyperImage("EO1H0010492002110110KZ_1T");
-	//img = hyperImage.getComposite(650, 580, 508);
-	//img = hyperImage.getComposite(1954, 1629, 1074); // Short Wavelength InfraRed (SWIR)
-
-	Mat gray;
-	cvtColor(img, gray, CV_BGR2GRAY);
-
-	threshold(gray, thresh, 0, 255, THRESH_BINARY_INV + THRESH_OTSU);
-
-	// noise removal
-	namedWindow("Window", CV_WINDOW_AUTOSIZE);
-	createTrackbar("Operator:\n 0: Opening - 1: Closing \n 2: Gradient - 3: Top Hat \n 4: Black Hat", "Window", &morph_operator, 4, Morphology_Operations);
-	createTrackbar("Element:\n 0: Rect - 1: Cross - 2: Ellipse", "Window",
-		&morph_elem, 2,
-		Morphology_Operations);
-	createTrackbar("Kernel size:\n 2n +1", "Window",
-		&morph_size, 21,
-		Morphology_Operations);
-	Morphology_Operations(0, 0);
-	waitKey(0);
-
-	// sure background area
+	// Sure background area
 	Mat sure_bg;
 	Mat kernel(3, 3, CV_8UC1);
 	kernel = cv::Scalar(1);
@@ -111,7 +106,6 @@ void WatershedTest()
 
 	// Finding unknown region
 	sure_fg.convertTo(sure_fg, CV_8UC1);
-	//cvtColor(sure_bg, sure_bg, CV_BGR2GRAY);
 	Mat unknown;
 	subtract(sure_bg, sure_fg, unknown);
 
@@ -120,7 +114,7 @@ void WatershedTest()
 	connectedComponents(sure_fg, markers);
 
 	// Add one to all labels so that sure background is not 0, but 1
-	// Now, mark the region of unknown with zero
+	// Also mark the region of unknown with zero
 	for (int r = 0; r < markers.rows; r++)
 	{
 		for (int c = 0; c < markers.cols; c++)
@@ -136,8 +130,10 @@ void WatershedTest()
 		}
 	}
 
+	// Apply watershed method
 	watershed(img, markers);
 
+	// Draw markekrs in pure-green on image
 	for (int r = 0; r < img.rows; r++)
 	{
 		for (int c = 0; c < img.cols; c++)
@@ -151,20 +147,31 @@ void WatershedTest()
 		}
 	}
 
+	// Show generaed watershed image with markers
 	imshow("Watershed", img);
 	imwrite("Watershed.png", img);
 	waitKey(0);
+
+	return img;
 }
 
-void TaranTest()
+// FindVegetation
+// This method takes a given SpecImage and displays the images listed below: 
+//		-Original Color composite
+//		-Short-Wave-Infared (SWIR) "hypercolor" image
+//		-Vegetation health map (red on grayscale)
+//		-Vegetation health map composite (red on color)
+// Pre-Conditions: Supplied hyperImage exists and is non-empty 
+// Post-Conditions: Returns the gray-red map of the vegetation health, where areas
+//  of medium to high vegetation health are dispalyed, and areas of low vegetation
+//  health (those areas unlikely to have vegetation) are displayed as gray.
+Mat FindVegetation(SpecImage hyperImage)
 {
-	SpecImage newImg("EO1H0010492002110110KZ_1T");
-
-	Mat colorComposite = newImg.getComposite(641, 580, 509); // Hyperion reccomended color composite
-	Mat swir = newImg.getComposite(1954, 1629, 1074); // Short Wavelength InfraRed (SWIR)
-
+	Mat colorComposite = hyperImage.getComposite(641, 580, 509); // Hyperion reccomended color composite
+	Mat swir = hyperImage.getComposite(1954, 1629, 1074); // Short Wavelength InfraRed (SWIR)
+	
 	Mat grayscale;
-	Mat veg = newImg.getImage(855); // 16US1
+	Mat veg = hyperImage.getImage(855); // 16US1
 
 	short arbitraryThreshold = 32768 / 64;
 	veg.convertTo(veg, CV_8UC1, 255.0 / arbitraryThreshold);
@@ -193,14 +200,20 @@ void TaranTest()
 	imwrite("RedVegGray.png", redVegetationGray);
 	imwrite("SWIR.png", swir);
 	waitKey(0);
+
+	return redVegetationGray;
 }
 
-void SpecFilterTest()
+// SpecFilterTest
+// This method takes a given SpecImage and a filter name and displays it's 
+//  resulting filter map
+// Pre-Conditions: Supplied hyperImage exists and is non-empty 
+// Post-Conditions: Returns the grayscale filtered map created by filtering the
+//  supplied hyperImage with the filter "[filterName].txt".
+Mat SpecFilterTest(SpecImage hyperImage, string filterName)
 {
-	SpecImage hyperImage("EO1H0010492002110110KZ_1T");
-	waitKey(0);
 	SpecFilter filter;
-	filter.LoadFromFile("water.txt");
+	filter.LoadFromFile(filterName + ".txt");
 	Mat result = filter.filter(hyperImage);
 
 	imshow("Original", hyperImage.getComposite(650, 580, 508));
@@ -208,12 +221,23 @@ void SpecFilterTest()
 	imshow("Targets", result);
 	imwrite("Fir Trees.png", result);
 	waitKey(0);
+
+	return result;
 }
 
-void christianTest()
+// TreesWaterFilter
+// This method takes a given SpecImage and displays the images listed below: 
+//		-Original Color composite
+//		-Trees (douglas_fir) filter image
+//		-Water filter image
+//		-Trees (red) and Water (blue) composite image
+// Pre-Conditions: Supplied hyperImage exists and is non-empty 
+// Post-Conditions: Returns the red/blue filtered map created by comining the 
+//  resulting filtermaps of hyperImage with the filter "water.txt" and the filter
+//  "douglas_fir.txt". Areas in the image that are red are those areas tat have
+//  trees, whereas blue areas are those with water.
+Mat TreesWaterFilter(SpecImage hyperImage)
 {
-	SpecImage hyperImage("EO1H0460272003133110PW");
-	waitKey(0);
 	SpecFilter filterfir;
 	filterfir.LoadFromFile("douglas_fir.txt");
 	Mat resultTree = filterfir.filter(hyperImage);
@@ -275,16 +299,25 @@ void christianTest()
 	imwrite("water.png", resultWater);
 	imshow("water and trees", waterAndTrees);
 	imwrite("waterAndTrees.png", waterAndTrees);
-	
-	img = waterAndTrees;
 	waitKey(0);
+
+	return waterAndTrees;
 }
 
+// main
+// Run the specified methods, given the supplied SpecImage
+// Pre-Conditions: The folder given as a paramater for newSpecImg exists, and 
+//  contains the correct images with the correct filenames.
+// Post-Conditions: Runs the uncommented methods, each of which is detailed
+//  above
 int main(int argc, char* argv[])
 {
-	//TaranTest();
-	//SpecFilterTest();
-	christianTest();
-	WatershedTest();
+	SpecImage newSpecImg("EO1H0010492002110110KZ_1T");
+
+	Mat img;
+	//img = FindVegetation(newSpecImg);
+	//img = SpecFilterTest(newSpecImg, "douglas_fir");
+	img = TreesWaterFilter(newSpecImg);
+	Mat watershed = Watershed(img);
 }
 
