@@ -1,35 +1,31 @@
-/*
-	Implements SpecFilter.h
-	@author Anthony Pepe
-*/
+
 #include "SpecFilter.h"
 
-/*
-Creates a new filter with no values for any wavelength. Users
-can set wavelength-reflectance values directly via SetIntensity(),
-or can upload a USGS reflectance file via LoadFromFile().
-*/
+//  SpecFilter
+//  Creates a new filter with no values for any wavelength. Users
+//  can set wavelength-reflectance values directly via SetIntensity(),
+//  or can upload a USGS reflectance file via LoadFromFile().
 SpecFilter::SpecFilter()
 {
-	// Nothing to construct
+	//  Nothing to construct
 }
 
-/*
-Returns the reflectance intensity of the filter at the specified wavelength.
-@param wavelength Wavelength in nanometers. (1,000 nanometers = 1 micrometer)
-@return Reflectance intensity of the filter at that wavelength.
-*/
+//  GetIntensityNano
+//  Returns the reflectance intensity of the filter at the specified wavelength.
+//  Pre-Conditions: The wavelength provided must be in nanometers
+//  Post-Conditions: The Reflectance intensity of the filter at that wavelength 
+//  is returned.
 double SpecFilter::GetIntensityNano(const int& wavelength) const
 {
 	double wavelengthMicro = wavelength / 1000.0;
 	return GetIntensityMicro(wavelengthMicro);
 }
 
-/*
-Returns the reflectance intensity of the filter at the specified wavelength.
-@param wavelength Wavelength in micrometers.
-@return Reflectance intensity of the filter at that wavelength.
-*/
+//  GetIntensityMicro
+//  Returns the reflectance intensity of the filter at the specified wavelength.
+//  Pre-Conditions: The wavelength provided must be in micrometers
+//  Post-Conditions: The Reflectance intensity of the filter at that wavelength 
+//  is returned.
 double SpecFilter::GetIntensityMicro(const double& wavelength) const
 {
 	map<double, double>::const_iterator iter = filterData.find(wavelength);
@@ -40,36 +36,40 @@ double SpecFilter::GetIntensityMicro(const double& wavelength) const
 	return iter->second;
 }
 
-/*
-Sets the reflectance intensity of the filter at the specified wavelength.
-The intensity must be between 0 and 1.
-@param wavelength Wavelength in nanometers. (1,000 nanometers = 1 micrometer)
-@param intensity Reflectance intensity of the filter. Must be between 0 and 1.
-*/
+//  SetIntensityNano
+//  Sets the reflectance intensity of the filter at the specified wavelength.
+//  The intensity must be between 0 and 1.
+//  Pre-Conditions: wavelength Wavelength in nanometers. (1,000 nanometers = 1 
+//  micrometer)
+//  Post-Conditions: Reflectance intensity of the filter is returned. The 
+//  value must be between 0 and 1.
 void SpecFilter::SetIntensityNano(const int& wavelength, const double& intensity)
 {
 	double wavelengthMicro = wavelength / 1000.0;
 	return SetIntensityMicro(wavelengthMicro, intensity);
 }
 
-/*
-Sets the reflectance intensity of the filter at the specified wavelength.
-The intensity must be between 0 and 1.
-@param wavelength Wavelength in micrometers.
-@param intensity Reflectance intensity of the filter. Must be between 0 and 1.
-*/
+//  SetIntensityMicro
+//  Sets the reflectance intensity of the filter at the specified wavelength.
+//  The intensity must be between 0 and 1.
+//  Pre-Conditions: wavelength Wavelength in micrometers.
+//  Post-Conditions: Reflectance intensity of the filter is returned. The 
+//  value must be between 0 and 1.
 void SpecFilter::SetIntensityMicro(const double& wavelength, const double& intensity)
 {
 	filterData[wavelength] = intensity;
 }
 
-/*
-Loads filter data from a USGS formatted Reflectance Pattern file. Previous filter
-data may be overwritten during this process.
-@param filename Relative file location to load.
-@return True if the file was read successfully, false otherwise.
-@see http://speclab.cr.usgs.gov/spectral.lib06/ds231/datatable.html
-*/
+//  LoadFromFile
+//  Loads filter data from a USGS formatted Reflectance Pattern file. Previous filter
+//  data may be overwritten during this process.
+//  Pre-Conditions: The filename Relative file location to load must be provided, 
+//  and the file must exist and be properly formatted (reflectance values start at 
+//  line 16, etc.).
+//  Post-Conditions: return True if the file was read successfully, false otherwise.
+//  On success the reflectance values will be read in an stored for filtering.
+//  see http://speclab.cr.usgs.gov/spectral.lib06/ds231/datatable.html
+
 bool SpecFilter::LoadFromFile(string fileName)
 {
 	ifstream inputFile(fileName);
@@ -84,12 +84,12 @@ bool SpecFilter::LoadFromFile(string fileName)
 	while (!inputFile.eof())
 	{
 		getline(inputFile, line);
-		if (lineCount < 16) // Data starts at line 16
+		if (lineCount < 16) //  Data starts at line 16
 		{
 			++lineCount;
 			continue;
 		}
-		if (line.find("-1.23e34") != string::npos) // Indicates data does not exist.
+		if (line.find("-1.23e34") != string::npos) //  Indicates data does not exist.
 		{
 			continue;
 		}
@@ -105,14 +105,14 @@ bool SpecFilter::LoadFromFile(string fileName)
 	return true;
 }
 
-/*
-Finds pixles in a target image that have similar reflectance values to this filter.
-Returns a greyscale image where black and dark pixels are "poor matches" and bright or
-white pixels are "strong matches."
-@param image Hyperspectral image to run this filter against.
-@return Greyscale image (type CV_8UC1) where bright/white pixels correspond to
-positive results from this filter.
-*/
+//  filter
+//  Finds pixles in a target image that have similar reflectance values to this filter.
+//  Returns a greyscale image where black and dark pixels are "poor matches" and bright or
+//  white pixels are "strong matches."
+//  Pre-Conditions: A image Hyperspectral image to run this filter against 
+//  must be passed in
+//  Post-Conditions: A greyscale image (type CV_8UC1) where bright/white 
+//  pixels indicate a likely match to the object type being searched for.
 Mat SpecFilter::filter(const SpecImage& hyperImage) const
 {
 
@@ -124,7 +124,7 @@ Mat SpecFilter::filter(const SpecImage& hyperImage) const
 	map<double, double>::const_iterator i;
 	for (i = filterData.begin(); i != filterData.end(); ++i)
 	{
-		int wavelength = static_cast<int>(i->first * 1000); // convert back to nanometers
+		int wavelength = static_cast<int>(i->first * 1000); //  convert back to nanometers
 		double searchReflectance = i->second;
 		Mat image;
 		hyperImage.getImage(wavelength).convertTo(image, CV_8UC1);
@@ -159,8 +159,8 @@ Mat SpecFilter::filter(const SpecImage& hyperImage) const
 		}
 	}
 
-	// There are 224 possible channels (wavelengths). If we set a max allowable difference of 0.20% intensity
-	// per channel, that's ~40 total possible difference.
+	//  There are 224 possible channels (wavelengths). If we set a max allowable difference of 0.20% intensity
+	//  per channel, that's ~40 total possible difference.
 	const double MATCH_MAX = 40.0;
 	Mat resultImage(2, dims, CV_8UC1, Scalar::all(0));
 	for (int col = 0; col < cols; ++col)
@@ -173,7 +173,7 @@ Mat SpecFilter::filter(const SpecImage& hyperImage) const
 				continue;
 			}
 			uchar pixelValue = 255 - static_cast<uchar>(255 * (val / MATCH_MAX));
-			//resultImage.at<uchar>(row, col) = pixelValue;
+			//  resultImage.at<uchar>(row, col) = pixelValue;
 			if (pixelValue > 128)
 			{
 				resultImage.at<uchar>(row, col) = 0;

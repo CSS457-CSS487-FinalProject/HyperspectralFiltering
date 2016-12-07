@@ -19,13 +19,13 @@ Date: December 2016
 using namespace cv;
 using namespace std;
 
-// type2str
-// This method takes a given OpenCV Mat type and returns the string 
+//  type2str
+//  This method takes a given OpenCV Mat type and returns the string 
 //  representatiton of that type. Useful for debugging purposes (eg. determining
 //  the bit depth of TIF images).
-// Pre-Conditions: type is the integer type of a Mat acquired by the code
+//  Pre-Conditions: type is the integer type of a Mat acquired by the code
 //  matrix.type().
-// Post-Conditions: The string representation of the given type is returned  
+//  Post-Conditions: The string representation of the given type is returned  
 string type2str(int type)
 {
 	string r;
@@ -51,21 +51,21 @@ string type2str(int type)
 	return r;
 }
 
-// Watershed
-// This method applies Watershed segmetation on the supplied image, returning
+//  Watershed
+//  This method applies Watershed segmetation on the supplied image, returning
 //  and image whose green channel is made up of the watershed lines. This image
 //  is shown to the user at the end of the method (with a waitKey(0)).
-// Pre-Conditions: Img is a 8UC, wherein bright values indicate areas of
+//  Pre-Conditions: Img is a 8UC, wherein bright values indicate areas of
 //  interest. Img is expected to be either grayscale (8UC1) or color (8UC3).
-// Post-Conditions: The original img is returned with watershed markings overlayed
+//  Post-Conditions: The original img is returned with watershed markings overlayed
 //  in pure-green (0, 255, 0). Bright areas are outlined as areas of interest. The
 //  returned Img is always 8UC3.
-// DISCLAIMER: This code is adapted from the example for watershed segmentnation
+//  DISCLAIMER: This code is adapted from the example for watershed segmentnation
 //  written in Python at the following link:
-//  http://docs.opencv.org/3.1.0/d3/db4/tutorial_py_watershed.html
+//  http:// docs.opencv.org/3.1.0/d3/db4/tutorial_py_watershed.html
 Mat Watershed(Mat img)
 {
-	// Create a binary threshold image
+	//  Create a binary threshold image
 	Mat thresh;
 	if (img.channels() == 1)
 	{
@@ -78,21 +78,21 @@ Mat Watershed(Mat img)
 	}
 	threshold(thresh, thresh, 0, 255, THRESH_BINARY_INV + THRESH_OTSU);
 
-	// Noise removal
+	//  Noise removal
 	int morph_size = 8;
 	Mat element = getStructuringElement(2, Size(2 * morph_size + 1, 2 * morph_size + 1), Point(morph_size, morph_size));
 
-	// Apply the specified morphology operation
+	//  Apply the specified morphology operation
 	Mat opening;
 	morphologyEx(thresh, opening, 2, element);
 
-	// Sure background area
+	//  Sure background area
 	Mat sure_bg;
 	Mat kernel(3, 3, CV_8UC1);
 	kernel = cv::Scalar(1);
 	dilate(opening, sure_bg, kernel, Point(-1, -1), 3);
 
-	// Finding sure foreground area
+	//  Finding sure foreground area
 	Mat dist_transform;
 	double maxVal;
 	double minVal;
@@ -104,17 +104,17 @@ Mat Watershed(Mat img)
 	minMaxLoc(dist_transform, &minVal, &maxVal);
 	threshold(dist_transform, sure_fg, 4, 255, THRESH_TOZERO);
 
-	// Finding unknown region
+	//  Finding unknown region
 	sure_fg.convertTo(sure_fg, CV_8UC1);
 	Mat unknown;
 	subtract(sure_bg, sure_fg, unknown);
 
-	// Marker labelling
+	//  Marker labelling
 	Mat markers;
 	connectedComponents(sure_fg, markers);
 
-	// Add one to all labels so that sure background is not 0, but 1
-	// Also mark the region of unknown with zero
+	//  Add one to all labels so that sure background is not 0, but 1
+	//  Also mark the region of unknown with zero
 	for (int r = 0; r < markers.rows; r++)
 	{
 		for (int c = 0; c < markers.cols; c++)
@@ -130,10 +130,10 @@ Mat Watershed(Mat img)
 		}
 	}
 
-	// Apply watershed method
+	//  Apply watershed method
 	watershed(img, markers);
 
-	// Draw markekrs in pure-green on image
+	//  Draw markekrs in pure-green on image
 	for (int r = 0; r < img.rows; r++)
 	{
 		for (int c = 0; c < img.cols; c++)
@@ -147,7 +147,7 @@ Mat Watershed(Mat img)
 		}
 	}
 
-	// Show generaed watershed image with markers
+	//  Show generaed watershed image with markers
 	imshow("Watershed", img);
 	imwrite("Watershed.png", img);
 	waitKey(0);
@@ -155,32 +155,32 @@ Mat Watershed(Mat img)
 	return img;
 }
 
-// FindVegetation
-// This method takes a given SpecImage and displays the images listed below: 
-//		-Original Color composite
-//		-Short-Wave-Infared (SWIR) "hypercolor" image
-//		-Vegetation health map (red on grayscale)
-//		-Vegetation health map composite (red on color)
-// Pre-Conditions: Supplied hyperImage exists and is non-empty 
-// Post-Conditions: Returns the gray-red map of the vegetation health, where areas
+//  FindVegetation
+//  This method takes a given SpecImage and displays the images listed below: 
+//  		-Original Color composite
+//  		-Short-Wave-Infared (SWIR) "hypercolor" image
+//  		-Vegetation health map (red on grayscale)
+//  		-Vegetation health map composite (red on color)
+//  Pre-Conditions: Supplied hyperImage exists and is non-empty 
+//  Post-Conditions: Returns the gray-red map of the vegetation health, where areas
 //  of medium to high vegetation health are dispalyed, and areas of low vegetation
 //  health (those areas unlikely to have vegetation) are displayed as gray.
 Mat FindVegetation(SpecImage hyperImage)
 {
-	Mat colorComposite = hyperImage.getComposite(641, 580, 509); // Hyperion reccomended color composite
-	Mat swir = hyperImage.getComposite(1954, 1629, 1074); // Short Wavelength InfraRed (SWIR)
+	Mat colorComposite = hyperImage.getComposite(641, 580, 509); //  Hyperion reccomended color composite
+	Mat swir = hyperImage.getComposite(1954, 1629, 1074); //  Short Wavelength InfraRed (SWIR)
 	
 	Mat grayscale;
-	Mat veg = hyperImage.getImage(855); // 16US1
+	Mat veg = hyperImage.getImage(855); //  16US1
 
 	short arbitraryThreshold = 32768 / 64;
 	veg.convertTo(veg, CV_8UC1, 255.0 / arbitraryThreshold);
 
-	cvtColor(colorComposite, grayscale, CV_RGB2GRAY); // Convert to gray
+	cvtColor(colorComposite, grayscale, CV_RGB2GRAY); //  Convert to gray
 
 	Mat redVegetationGray = grayscale.clone();
 	Mat redVegetationColor = colorComposite.clone();
-	cvtColor(redVegetationGray, redVegetationGray, CV_GRAY2BGR); // Return to 3 channels
+	cvtColor(redVegetationGray, redVegetationGray, CV_GRAY2BGR); //  Return to 3 channels
 
 	for (int r = 0; r < redVegetationColor.rows; r++)
 	{
@@ -204,11 +204,11 @@ Mat FindVegetation(SpecImage hyperImage)
 	return redVegetationGray;
 }
 
-// SpecFilterTest
-// This method takes a given SpecImage and a filter name and displays it's 
+//  SpecFilterTest
+//  This method takes a given SpecImage and a filter name and displays it's 
 //  resulting filter map
-// Pre-Conditions: Supplied hyperImage exists and is non-empty 
-// Post-Conditions: Returns the grayscale filtered map created by filtering the
+//  Pre-Conditions: Supplied hyperImage exists and is non-empty 
+//  Post-Conditions: Returns the grayscale filtered map created by filtering the
 //  supplied hyperImage with the filter "[filterName].txt".
 Mat SpecFilterTest(SpecImage hyperImage, string filterName)
 {
@@ -225,14 +225,14 @@ Mat SpecFilterTest(SpecImage hyperImage, string filterName)
 	return result;
 }
 
-// TreesWaterFilter
-// This method takes a given SpecImage and displays the images listed below: 
-//		-Original Color composite
-//		-Trees (douglas_fir) filter image
-//		-Water filter image
-//		-Trees (red) and Water (blue) composite image
-// Pre-Conditions: Supplied hyperImage exists and is non-empty 
-// Post-Conditions: Returns the red/blue filtered map created by comining the 
+//  TreesWaterFilter
+//  This method takes a given SpecImage and displays the images listed below: 
+//  		-Original Color composite
+//  		-Trees (douglas_fir) filter image
+//  		-Water filter image
+//  		-Trees (red) and Water (blue) composite image
+//  Pre-Conditions: Supplied hyperImage exists and is non-empty 
+//  Post-Conditions: Returns the red/blue filtered map created by comining the 
 //  resulting filtermaps of hyperImage with the filter "water.txt" and the filter
 //  "douglas_fir.txt". Areas in the image that are red are those areas tat have
 //  trees, whereas blue areas are those with water.
@@ -304,19 +304,19 @@ Mat TreesWaterFilter(SpecImage hyperImage)
 	return waterAndTrees;
 }
 
-// main
-// Run the specified methods, given the supplied SpecImage
-// Pre-Conditions: The folder given as a paramater for newSpecImg exists, and 
+//  main
+//  Run the specified methods, given the supplied SpecImage
+//  Pre-Conditions: The folder given as a paramater for newSpecImg exists, and 
 //  contains the correct images with the correct filenames.
-// Post-Conditions: Runs the uncommented methods, each of which is detailed
+//  Post-Conditions: Runs the uncommented methods, each of which is detailed
 //  above
 int main(int argc, char* argv[])
 {
 	SpecImage newSpecImg("EO1H0010492002110110KZ_1T");
 
 	Mat img;
-	//img = FindVegetation(newSpecImg);
-	//img = SpecFilterTest(newSpecImg, "douglas_fir");
+	//  img = FindVegetation(newSpecImg);
+	//  img = SpecFilterTest(newSpecImg, "douglas_fir");
 	img = TreesWaterFilter(newSpecImg);
 	Mat watershed = Watershed(img);
 }
