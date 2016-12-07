@@ -399,7 +399,7 @@ Mat SpecImage::makeComposite(Mat redImage, Mat blueImage, Mat greenImage)
 }
 
 // initilizeWavelengthTable
-// Load the Hyperion Wavelength table
+// Private method to load the Hyperion Wavelength table
 // Pre-conditions: None
 // Post-conditions: The SpecImage wavelength table is loaded (run at creation)
 // Developer Notes:  Hyperion has an odd part of it's wavelength table where bands 
