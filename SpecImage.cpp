@@ -1,19 +1,25 @@
 /*
-Defines a Spectral Image, which contains hundreds of separate images
-take of the same location at very different wavelengths.
+SpecImage
+Defines a Spectral Image, which contains hundreds of separate images taken of the 
+ same location at varying wavelengths over a large range. This object is designed
+ to work with a dataset provided by the EO_1 Hyperion satellite. The purpose of
+ this object is to make it easier to manage and fetch data in the provided image,
+ to ease filtering of the data.
 */
 #include "SpecImage.h"
-
-// Debuging
-#include <iostream>
 
 vector<int> SpecImage::hyperionWavelengthTable;
 
 /*
-Creates a new Spectral Image based on the image's root file name.
-Initializes the static table of hyperion satellite wavelengths, if
-it has not been initialized yet.
-See LoadFromFile
+SpecImage
+Creates a new SpecImage object, loads the hyperionWavelengthTable, and loads 
+ spectral images based on the image's root file name. See LoadFromFile for more 
+ information on loading spectral images.
+Pre-Condition: Filename refers to a folder of Hyperion hyperspectral satellite
+ images that have not been renamed. These images are expected to be in the GeoTIFF
+ format.
+Post-Condition: Images from the specified folder are loaded into this SpecImage
+ object, and can be accessed by SpecImage methods.
 */
 SpecImage::SpecImage(string fileName)
 {
@@ -29,9 +35,15 @@ SpecImage::SpecImage(string fileName)
 }
 
 /*
-Creates a new Spectral Image based on the image's root file name.
-This is done by dynamically generating file names since Hyperion's
-list of spectral images follow a set pattern.
+LoadFromFile
+Creates a new Spectral Image based on the image's root file name. This is done by
+ dynamically generating file names because Hyperion's list of spectral images
+ follow a set pattern.
+Pre-Condition: Filename refers to a folder of Hyperion hyperspectral satellite 
+ images that have not been renamed. These images are expected to be in the GeoTIFF
+ format.
+Post-Condition: Images from the specified folder are loaded into this SpecImage
+ object, and can be accessed by SpecImage methods.
 */
 void SpecImage::LoadFromFile(string fileName)
 {
@@ -89,10 +101,13 @@ void SpecImage::LoadFromFile(string fileName)
 }
 
 /*
+getImage
 Fetches a single spectral image, which is specified by its wavelength.
-Since the images are specified by a bounding set of wavelengths, the nearest
-wavelength is returned since an image for that exact wavelength may not exist.
-Returns the nearest wavelength image (OpenCV Mat).
+Pre-Condition: None
+Post-Condition: Returns the nearest wavelength image (OpenCV Mat). Since the images
+ are specified by a bounding set of wavelengths, the nearest wavelength is returned
+ because an image for that exact wavelength may not exist. If the image is out of
+ range, an empty Mat is returned.
 */
 Mat SpecImage::getImage(int wavelength) const
 {
@@ -130,7 +145,12 @@ Mat SpecImage::getImage(int wavelength) const
 	return specImg[index].img;
 }
 
-// Returns the height of the hyperspectral image (height of a single image).
+/*
+getCols
+Returns the height of the hyperspectral image (height of a single image).
+Pre-Condition: None
+Post-Condition: Returns an integer representing the height of the SpecImage.
+*/
 int SpecImage::getRows() const
 {
 	if (specImg.size() == 0)
@@ -140,7 +160,12 @@ int SpecImage::getRows() const
 	return specImg[0].img.rows;
 }
 
-// Returns the width of the hyperspectral image (width of a single image).
+/*
+getCols
+Returns the width of the hyperspectral image (width of a single image).
+Pre-Condition: None
+Post-Condition: Returns an integer representing the width of the SpecImage.
+*/
 int SpecImage::getCols() const
 {
 	if (specImg.size() == 0)
@@ -150,7 +175,13 @@ int SpecImage::getCols() const
 	return specImg[0].img.cols;
 }
 
-// Returns the number of wavelengths present in the hyperspectral image.
+/*
+getDepth
+Returns the number of wavelengths present in the hyperspectral image.
+Pre-Condition: None
+Post-Condition: Returns an integer representing the total depth (eg. number of
+ images or wavelengths) in this SpecImage.
+*/
 int SpecImage::getDepth() const
 {
 	return static_cast<int>(specImg.size());
@@ -158,11 +189,21 @@ int SpecImage::getDepth() const
 
 
 /*
+DEPRECATED
+getRGB
 Returns an RGB image estimation of this hyperspectral image.
+Pre-Condition: The SpecImage this is called on exists, and is non-empty.
+Post-Condition: Returns the color representation of the SpecImage as determined by
+ the 1931 CIE Color Data and 36 separate wavelength images.
+NOTE: This method was deprecated as we found that the results were unideal (in
+ terms of color accuracy. Moreover, we found this method of manipulating data 
+ across multiple images to be too time consuming for the user, as a simple 
+ composite of the correct wavelengths can create a color representation equivlent 
+ to that taken by a standard camera.
 */
 Mat SpecImage::getRGB()
 {
-	Mat_<Vec3b> rgb(specImg[0].img.rows, specImg[0].img.cols);
+	Mat_<Vec3b> rgb(getRows(), getCols());
 
 	// End-Image Gamma 
 	float gamma = 1.0f;
@@ -251,9 +292,9 @@ Mat SpecImage::getRGB()
 		{ (93813.0 / 1774030.0),      (-180961.0 / 887015.0),    (107481.0 / 93370.0) } };
 
 	// For every pixel in our end image...
-	for (int x = 0; x < specImg[0].img.rows; x++)
+	for (int x = 0; x < getRows(); x++)
 	{
-		for(int y = 0; y < specImg[0].img.cols; y++)
+		for(int y = 0; y < getCols(); y++)
 		{
 			float XYZ[3] = { 0 }; // Blank 3dim float array 
 
@@ -293,9 +334,16 @@ Mat SpecImage::getRGB()
 }
 
 /*
-Creates a composite image by stacking three specific wavelength images ontop of each other
-into a single composite image where the first, second, and third wavelength-images are
-turned into the red, green, and blue channels of the compositie image respectively.
+getComposite
+Creates a composite image by stacking three specific wavelength images ontop of 
+ each other into a single composite image where the first, second, and third 
+ wavelength-images are turned into the red, green, and blue channels of the 
+ compositie image respectively.
+Pre-Condition: The SpecImage this is called on exists, and is non-empty. The 
+ wavelengths supplied are to be in the range of 356nm to 2600nm.
+Post-Condition: Returns an 8UC3 image created as a result of using three grayscale
+ images acquired from the provided wavelengths. The variables (eg redWaveLength) 
+ coorespond to the color channel they will fill (eg R). 
 */
 Mat SpecImage::getComposite(int redWavelength, int blueWavelength, int greenWavelength)
 {
@@ -325,11 +373,16 @@ Mat SpecImage::getComposite(int redWavelength, int blueWavelength, int greenWave
 }
 
 /*
+makeComposite
 STATIC method to make a composite image given three grayscale images where
-the first, second, and third images make up the red, blue, and green channels
-of the composite image respectively.
-
-NOTE - The returned pointer is created in this function and must be deleted by the
+ the first, second, and third images make up the red, blue, and green channels
+ of the composite image respectively.
+Pre-Condition: The Mat images supplied exist, and are non-empty. These images are
+ expected to be grayscale images. 
+Post-Condition: Returns an 8UC3 image created as a result of using thre three 
+ grayscale images provided. The variables (eg redImage) coorespond to the color 
+ channel they will fill (eg R).
+NOTE: The returned pointer is created in this function and must be deleted by the
 calling function.
 */
 Mat SpecImage::makeComposite(Mat redImage, Mat blueImage, Mat greenImage)
@@ -359,12 +412,15 @@ Mat SpecImage::makeComposite(Mat redImage, Mat blueImage, Mat greenImage)
 	return composite;
 }
 
-// Load the Hyperion Wavelength table
-// Hyperion has an odd part of it's wavelength table where
-//  bands 71 through 91 overlap with 50 through 70. This is
-//  taken into account here.
-// This could be improved by importing the actual table, but
-//  this estimation is decently accurate.
+/* 
+initilizeWavelengthTable
+Load the Hyperion Wavelength table
+Pre-conditions: None
+Post-conditions: The SpecImage wavelength table is loaded (run at creation)
+Developer Notes:  Hyperion has an odd part of it's wavelength table where bands 71
+ through 91 overlap with 50 through 70. This is taken into account here. This could
+ be improved by importing the actual table, but this estimation is decently accurate.
+*/
 void SpecImage::initilizeWavelengthTable()
 {
 	hyperionWavelengthTable.reserve(242); // Reserve to reduce resizing
